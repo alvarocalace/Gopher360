@@ -95,8 +95,8 @@ void Gopher::loop() {
 
 void Gopher::handleDisableButton()
 {
-	setXboxClickState(XINPUT_GAMEPAD_BACK);
-	if (_xboxClickIsDown[XINPUT_GAMEPAD_BACK])
+	setXboxClickState(XINPUT_GAMEPAD_BACK | XINPUT_GAMEPAD_START);
+	if (_xboxClickIsDown[XINPUT_GAMEPAD_BACK | XINPUT_GAMEPAD_START])
 	{
 		_disabled = !_disabled;
 
