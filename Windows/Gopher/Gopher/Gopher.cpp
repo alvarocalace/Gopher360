@@ -60,6 +60,7 @@ void Gopher::loop() {
 	mapKeyboard(XINPUT_GAMEPAD_DPAD_DOWN, VK_DOWN);
 	mapKeyboard(XINPUT_GAMEPAD_DPAD_LEFT, VK_LEFT);
 	mapKeyboard(XINPUT_GAMEPAD_DPAD_RIGHT, VK_RIGHT);
+	mapKeyboard(XINPUT_GAMEPAD_RIGHT_SHOULDER, VK_RWIN);
 
 	setXboxClickState(XINPUT_GAMEPAD_Y);
 	if (_xboxClickIsDown[XINPUT_GAMEPAD_Y])
@@ -72,23 +73,26 @@ void Gopher::loop() {
 
 	setXboxClickState(XINPUT_GAMEPAD_LEFT_SHOULDER);
 
-
 	if (_xboxClickIsDown[XINPUT_GAMEPAD_LEFT_SHOULDER]) {
 
-		if (speed == SPEED_LOW)
+		if (speed == SPEED_SUPER_LOW) {
+			Beep(200, 210);
+			speed = SPEED_LOW;
+		}
+		else if (speed == SPEED_LOW)
 		{
 			Beep(240, 210);
 			speed = SPEED_MED;
 		}
 		else if (speed == SPEED_MED)
 		{
-			Beep(260, 210);
+			Beep(280, 210);
 			speed = SPEED_HIGH;
 		}
 		else if (speed == SPEED_HIGH)
 		{
-			Beep(200, 210);
-			speed = SPEED_LOW;
+			Beep(160, 210);
+			speed = SPEED_SUPER_LOW;
 		}
 	}
 }
