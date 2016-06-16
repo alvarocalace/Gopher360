@@ -74,26 +74,7 @@ void Gopher::loop() {
 	setXboxClickState(XINPUT_GAMEPAD_LEFT_SHOULDER);
 
 	if (_xboxClickIsDown[XINPUT_GAMEPAD_LEFT_SHOULDER]) {
-
-		if (speed == SPEED_SUPER_LOW) {
-			Beep(200, 210);
-			speed = SPEED_LOW;
-		}
-		else if (speed == SPEED_LOW)
-		{
-			Beep(240, 210);
-			speed = SPEED_MED;
-		}
-		else if (speed == SPEED_MED)
-		{
-			Beep(280, 210);
-			speed = SPEED_HIGH;
-		}
-		else if (speed == SPEED_HIGH)
-		{
-			Beep(160, 210);
-			speed = SPEED_SUPER_LOW;
-		}
+		speed = (speed == SPEED_SUPER_LOW) ? SPEED_MED : SPEED_SUPER_LOW;
 	}
 }
 
