@@ -32,14 +32,13 @@ private:
 	float _yRest = 0.0f;
 
 	bool _disabled = false; //use for Select sleep mode
-	bool _hidden = false; //press Y to hide, check this var
+	HWND _hiddenWindow = NULL;
 
 	std::map<DWORD, bool> _xboxClickStateLastIteration;
 	std::map<DWORD, bool> _xboxClickIsDown;
 	std::map<DWORD, bool> _xboxClickIsUp;
 
 	CXBOXController* _controller;
-
 public:
 
 	Gopher(CXBOXController* controller);

@@ -22,7 +22,7 @@ void inputKeyboardUp(WORD cmd)
 	inputKeyboard(cmd, KEYEVENTF_KEYUP);
 }
 
-void mouseEvent(WORD dwFlags, DWORD mouseData=0)
+void mouseEvent(WORD dwFlags, DWORD mouseData = 0)
 {
 	INPUT input;
 	input.type = INPUT_MOUSE;
@@ -41,7 +41,7 @@ void Gopher::loop() {
 	Sleep(SLEEP_AMOUNT);
 
 	_currentState = _controller->GetState();
-	
+
 	handleDisableButton();
 
 	if (_disabled)
@@ -105,19 +105,20 @@ void Gopher::handleDisableButton()
 
 void Gopher::toggleWindowVisibility()
 {
-	_hidden = !_hidden;
-
-	if (_hidden)
+	// if there's a hidden window, hide it
+	if (_hiddenWindow != NULL)
 	{
-		HWND hWnd = GetConsoleWindow();
-		ShowWindow(hWnd, SW_HIDE);
-		printf("Window hidden\n");
+		ShowWindow(_hiddenWindow, SW_SHOW);
+		_hiddenWindow = NULL;
+		printf("\nWindow unhidden");
 	}
 	else
 	{
-		HWND hWnd = GetConsoleWindow();
-		ShowWindow(hWnd, SW_SHOW);
-		printf("Window unhidden\n");
+		if ((_hiddenWindow = GetForegroundWindow()) != NULL)
+		{
+			ShowWindow(_hiddenWindow, SW_HIDE);
+			printf("\nWindow hidden");
+		}
 	}
 }
 
@@ -163,7 +164,7 @@ void Gopher::handleMouseMovement()
 
 	y -= dy;
 	_yRest = y - (float)((int)y);
-	
+
 	SetCursorPos((int)x, (int)y); //after all click input processing
 }
 
