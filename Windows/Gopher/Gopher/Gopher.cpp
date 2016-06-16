@@ -108,16 +108,21 @@ void Gopher::toggleWindowVisibility()
 	// if there's a hidden window, hide it
 	if (_hiddenWindow != NULL)
 	{
-		ShowWindow(_hiddenWindow, SW_SHOW);
+		WINDOWPLACEMENT windowPlacement;
+		GetWindowPlacement(_hiddenWindow, &windowPlacement);
+
+		// check that the window is still minimized
+		if (windowPlacement.showCmd == SW_SHOWMINIMIZED)
+		{
+			ShowWindow(_hiddenWindow, SW_RESTORE);
+		}
 		_hiddenWindow = NULL;
-		printf("\nWindow unhidden");
 	}
 	else
 	{
 		if ((_hiddenWindow = GetForegroundWindow()) != NULL)
 		{
-			ShowWindow(_hiddenWindow, SW_HIDE);
-			printf("\nWindow hidden");
+			ShowWindow(_hiddenWindow, SW_FORCEMINIMIZE);
 		}
 	}
 }
