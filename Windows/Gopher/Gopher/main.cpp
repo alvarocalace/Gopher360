@@ -53,6 +53,8 @@ int main()
 	printf("Gopher is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n");
 	printf("\nYou should have received a copy of the GNU General Public License\nalong with this program. If not, see http://www.gnu.org/licenses/.\n\n-------------------------\n\n");
 	printf("-- This Gopher version was modified by github.com/alvarocalace --");
+	printf("Tip - Press Y to minimize the current window. Press Y again to maximize that same window.");
+	printf("Tip - Press both left and right triggers at the same time to power off the gamepad (no more removing batteries!).");
 
 	if (!isRunningAsAdministrator())
 	{
