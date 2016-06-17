@@ -1,4 +1,5 @@
 #include "Gopher.h"
+#include "PolicyConfig.h"
 
 void inputKeyboard(WORD cmd, DWORD flag)
 {
@@ -35,13 +36,16 @@ void mouseEvent(WORD dwFlags, DWORD mouseData = 0)
 Gopher::Gopher(CXBOXController * controller)
 	: _controller(controller)
 {
-	_hXInputDll = LoadLibraryA("XInput1_3.dll");
-	_powerOffCallback = (XInputPowerOffController)GetProcAddress(_hXInputDll, (LPCSTR)103);
+	setupPowerOffCallback();
+	setupAudioDeviceIds();
 }
 
 Gopher::~Gopher()
 {
-	FreeLibrary(_hXInputDll);
+	if (SUCCEEDED(_hXInputDll))
+	{
+		FreeLibrary(_hXInputDll);
+	}
 }
 
 void Gopher::loop() {
@@ -58,6 +62,7 @@ void Gopher::loop() {
 
 	handleMouseMovement();
 	handleScrolling();
+	handleAudioDeviceChange();
 
 	mapMouseClick(XINPUT_GAMEPAD_A, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP);
 	mapMouseClick(XINPUT_GAMEPAD_X, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP);
@@ -67,7 +72,6 @@ void Gopher::loop() {
 	mapKeyboard(XINPUT_GAMEPAD_DPAD_DOWN, VK_DOWN);
 	mapKeyboard(XINPUT_GAMEPAD_DPAD_LEFT, VK_LEFT);
 	mapKeyboard(XINPUT_GAMEPAD_DPAD_RIGHT, VK_RIGHT);
-	mapKeyboard(XINPUT_GAMEPAD_RIGHT_SHOULDER, VK_RWIN);
 
 	setXboxClickState(XINPUT_GAMEPAD_Y);
 	if (_xboxClickIsDown[XINPUT_GAMEPAD_Y])
@@ -107,6 +111,15 @@ void Gopher::handleDisableButton()
 			Beep(1600, 200);
 			Beep(1800, 200);
 		}
+	}
+}
+
+void Gopher::handleAudioDeviceChange()
+{
+	setXboxClickState(XINPUT_GAMEPAD_RIGHT_SHOULDER);
+	if (_xboxClickIsDown[XINPUT_GAMEPAD_RIGHT_SHOULDER])
+	{
+		changeToNextAudioDevice();
 	}
 }
 
@@ -272,15 +285,116 @@ void Gopher::mapMouseClick(DWORD STATE, DWORD keyDown, DWORD keyUp)
 	}
 }
 
+void Gopher::setupPowerOffCallback()
+{
+	if (SUCCEEDED(_hXInputDll = LoadLibraryA("XInput1_3.dll")))
+	{
+		_powerOffCallback = (XInputPowerOffController)GetProcAddress(_hXInputDll, (LPCSTR)103);
+	}
+	else
+	{
+		printf("\nWarning: Could not set up power off functionality.\n");
+	}
+}
+
+void Gopher::setupAudioDeviceIds()
+{
+	HRESULT hr = CoInitialize(NULL);
+	if (SUCCEEDED(hr))
+	{
+		IMMDeviceEnumerator *pEnum = NULL;
+		// Create a multimedia device enumerator.
+		hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL,
+			CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&pEnum);
+		if (SUCCEEDED(hr))
+		{
+			IMMDeviceCollection *pDevices;
+			// Enumerate the output devices.
+			hr = pEnum->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &pDevices);
+			if (SUCCEEDED(hr))
+			{
+				UINT count;
+				pDevices->GetCount(&count);
+				if (SUCCEEDED(hr))
+				{
+					for (int i = 0; i < count; i++)
+					{
+						IMMDevice *pDevice;
+						hr = pDevices->Item(i, &pDevice);
+						if (SUCCEEDED(hr))
+						{
+							LPWSTR wstrID = NULL;
+							hr = pDevice->GetId(&wstrID);
+							if (SUCCEEDED(hr))
+							{
+								_audioDeviceIds.push_back(wstrID);
+							}
+							pDevice->Release();
+						}
+					}
+				}
+				pDevices->Release();
+			}
+
+			// set current default audio device
+			_currentAudioDeviceIndex = 0;
+			IMMDevice *pDefaultDevice = NULL;
+			hr = pEnum->GetDefaultAudioEndpoint(eRender, eConsole, &pDefaultDevice);
+			if (SUCCEEDED(hr))
+			{
+				LPWSTR defaultDeviceID;
+				hr = pDefaultDevice->GetId(&defaultDeviceID);
+				if (SUCCEEDED(hr))
+				{
+					for (int i = 0; i < _audioDeviceIds.size(); i++)
+					{
+						if (wcscmp(_audioDeviceIds[i], defaultDeviceID) == 0)
+						{
+							_currentAudioDeviceIndex = i;
+							break;
+						}
+					}
+				}
+				pDefaultDevice->Release();
+			}
+		}
+	}
+}
+
+HRESULT Gopher::changeToNextAudioDevice()
+{
+	if (_audioDeviceIds.size() == 0)
+	{
+		return NULL;
+	}
+
+	IPolicyConfigVista *pPolicyConfig;
+	ERole reserved = eConsole;
+
+	HRESULT hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient),
+		NULL, CLSCTX_ALL, __uuidof(IPolicyConfigVista), (LPVOID *)&pPolicyConfig);
+
+	if (SUCCEEDED(hr))
+	{
+		_currentAudioDeviceIndex = (_currentAudioDeviceIndex + 1 >= _audioDeviceIds.size()) ? 0 : (_currentAudioDeviceIndex + 1);
+		hr = pPolicyConfig->SetDefaultEndpoint(_audioDeviceIds[_currentAudioDeviceIndex], reserved);
+		pPolicyConfig->Release();
+	}
+
+	return hr;
+}
+
 bool Gopher::handlePowerOff()
 {
 	bool poweredOff = false;
 
-	if (_currentState.Gamepad.bLeftTrigger == 0xFF && _currentState.Gamepad.bRightTrigger == 0xFF)
+	if (SUCCEEDED(_hXInputDll) && _currentState.Gamepad.bRightTrigger == 0xFF)
 	{
 		Beep(120, 300);
-		_powerOffCallback(0);
-		poweredOff = true;
+		if (SUCCEEDED(_powerOffCallback(0)))
+		{
+			poweredOff = true;
+		}
 	}
 
 	return poweredOff;

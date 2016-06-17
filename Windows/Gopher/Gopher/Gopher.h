@@ -6,14 +6,15 @@
 #include <mmdeviceapi.h> //vol
 #include <endpointvolume.h> //vol
 #include <map>
+#include <vector>
 #include "CXBOXController.h"
-
-typedef DWORD(WINAPI* XInputPowerOffController)(DWORD i);
 
 #pragma once
 class Gopher
 {
 private:
+	typedef DWORD(WINAPI* XInputPowerOffController)(DWORD i);
+
 	const int DEAD_ZONE = 5000; //X and Y minimum, below this is ignored since all controllers have some stick to them
 	const int SCROLL_DEAD_ZONE = 7000; // Right thumbstick should be less sensitive.
 	const int SCROLL_SPEED = 20; // Speed at which you scroll page.
@@ -42,6 +43,9 @@ private:
 
 	HINSTANCE _hXInputDll;
 	XInputPowerOffController _powerOffCallback;
+
+	std::vector<LPWSTR> _audioDeviceIds;
+	int _currentAudioDeviceIndex;
 public:
 
 	Gopher(CXBOXController* controller);
@@ -69,4 +73,12 @@ public:
 	void setXboxClickState(DWORD state);
 
 	bool handlePowerOff();
+
+	void setupPowerOffCallback();
+
+	void setupAudioDeviceIds();
+
+	HRESULT changeToNextAudioDevice();
+
+	void handleAudioDeviceChange();
 };
