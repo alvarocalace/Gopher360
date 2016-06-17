@@ -5,9 +5,7 @@
 #include <cmath> //for abs()
 #include <mmdeviceapi.h> //vol
 #include <endpointvolume.h> //vol
-
 #include <map>
-
 #include "CXBOXController.h"
 
 typedef DWORD(WINAPI* XInputPowerOffController)(DWORD i);
@@ -41,10 +39,14 @@ private:
 	std::map<DWORD, bool> _xboxClickIsUp;
 
 	CXBOXController* _controller;
+
+	HINSTANCE _hXInputDll;
 	XInputPowerOffController _powerOffCallback;
 public:
 
 	Gopher(CXBOXController* controller);
+	
+	~Gopher();
 
 	void loop();
 
