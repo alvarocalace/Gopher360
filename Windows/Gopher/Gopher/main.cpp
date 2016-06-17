@@ -42,7 +42,7 @@ int main()
 {
 	CXBOXController controller(1);
 	Gopher gopher(&controller);
-	SetConsoleTitle( TEXT( "Gopher v0.985" ) );
+	SetConsoleTitle( TEXT( "Gopher v0.985.ac.001" ) );
 
 	system("Color 1D");
 
@@ -52,10 +52,18 @@ int main()
 	printf("Welcome to Gopher360 - a lightweight controller-to-KBM tool.\nSee /r/Gopher360 and the GitHub repository at bit.ly/1syAhMT for more info. Copyleft 2014.\n\n-------------------------\n\n");
 	printf("Gopher is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n");
 	printf("\nYou should have received a copy of the GNU General Public License\nalong with this program. If not, see http://www.gnu.org/licenses/.\n\n-------------------------\n\n");
+
 	printf("\n-- This Gopher version was modified by github.com/alvarocalace --\n");
-	printf("\nTip - Press Y to minimize the current window. Press Y again to maximize that same window.");
-	printf("\nTip - Press the right trigger to power off the gamepad (no more removing batteries!).");
-	printf("\nTip - Press the right shoulder to switch between default audio devices.");
+	printf("\nNew controls:");
+	printf("\n- Press the select + start to disable Gopher.");
+	printf("\n- Press Y to minimize the current window. Press Y again to maximize that same window.");
+	printf("\n- Press the right shoulder to switch between default audio devices.");
+	printf("\n- Press the left thumb to power off the gamepad (no more removing batteries!).");
+	printf("\n- Press the right thumb to mute your volume.");
+	printf("\n- Press the select + right shoulder to increase your volume.");
+	printf("\n- Press the select + left shoulder to decrease your volume.");
+	printf("\n- Hold both triggers for 1 second to close the foreground window.");
+
 
 	if (!isRunningAsAdministrator())
 	{

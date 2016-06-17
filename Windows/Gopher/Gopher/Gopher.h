@@ -50,6 +50,8 @@ private:
 	int _currentAudioDeviceIndex;
 	IPolicyConfigVista *_pPolicyConfig;
 
+	const DWORD MS_UNTIL_CLOSE = 1000;
+	DWORD _startedHoldingToCloseTime = NULL;
 public:
 
 	Gopher(CXBOXController* controller);
@@ -85,4 +87,6 @@ public:
 	HRESULT changeToNextAudioDevice();
 
 	void handleAudioDeviceChange();
+
+	void handleCloseCurrentWindow();
 };

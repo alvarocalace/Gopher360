@@ -64,6 +64,7 @@ void Gopher::loop() {
 		return;
 	}
 
+	handleCloseCurrentWindow();
 	handleMouseMovement();
 	handleScrolling();
 	handleAudioDeviceChange();
@@ -76,6 +77,9 @@ void Gopher::loop() {
 	mapKeyboard(XINPUT_GAMEPAD_DPAD_DOWN, VK_DOWN);
 	mapKeyboard(XINPUT_GAMEPAD_DPAD_LEFT, VK_LEFT);
 	mapKeyboard(XINPUT_GAMEPAD_DPAD_RIGHT, VK_RIGHT);
+	mapKeyboard(XINPUT_GAMEPAD_RIGHT_THUMB, VK_VOLUME_MUTE);
+	mapKeyboard(XINPUT_GAMEPAD_BACK | XINPUT_GAMEPAD_LEFT_SHOULDER, VK_VOLUME_DOWN);
+	mapKeyboard(XINPUT_GAMEPAD_BACK | XINPUT_GAMEPAD_RIGHT_SHOULDER, VK_VOLUME_UP);
 
 	setXboxClickState(XINPUT_GAMEPAD_Y);
 	if (_xboxClickIsDown[XINPUT_GAMEPAD_Y])
@@ -368,7 +372,10 @@ HRESULT Gopher::changeToNextAudioDevice()
 
 	if (_audioDeviceIds.size() > 0 && SUCCEEDED(_pPolicyConfig))
 	{
-		_currentAudioDeviceIndex = (_currentAudioDeviceIndex + 1 >= _audioDeviceIds.size()) ? 0 : (_currentAudioDeviceIndex + 1);
+		if (++_currentAudioDeviceIndex == _audioDeviceIds.size())
+		{
+			_currentAudioDeviceIndex = 0;
+		}
 		hr = _pPolicyConfig->SetDefaultEndpoint(_audioDeviceIds[_currentAudioDeviceIndex], eConsole);
 	}
 
@@ -379,14 +386,44 @@ bool Gopher::handlePowerOff()
 {
 	bool poweredOff = false;
 
-	if (SUCCEEDED(_hXInputDll) && _currentState.Gamepad.bRightTrigger == 0xFF)
+	setXboxClickState(XINPUT_GAMEPAD_LEFT_THUMB);
+	if (SUCCEEDED(_hXInputDll) && _xboxClickIsDown[XINPUT_GAMEPAD_LEFT_THUMB])
 	{
-		Beep(120, 300);
 		if (SUCCEEDED(_powerOffCallback(0)))
 		{
+			Beep(120, 300);
 			poweredOff = true;
 		}
 	}
 
 	return poweredOff;
+}
+
+void Gopher::handleCloseCurrentWindow()
+{
+	if (_currentState.Gamepad.bRightTrigger == 0xFF && _currentState.Gamepad.bLeftTrigger == 0xFF)
+	{
+		if (_startedHoldingToCloseTime == NULL)
+		{
+			_startedHoldingToCloseTime = GetTickCount();
+		}
+		else if (GetTickCount() - _startedHoldingToCloseTime >= MS_UNTIL_CLOSE)
+		{
+			_startedHoldingToCloseTime = NULL;
+			HWND hCurrentWindow = GetForegroundWindow();
+			// do not close the gopher console
+			if (hCurrentWindow != GetConsoleWindow())
+			{
+				PostMessage(hCurrentWindow, WM_CLOSE, 0, 0);
+			}
+			else
+			{
+				printf("\nYou can't close the Gopher window!");
+			}
+		}
+	}
+	else
+	{
+		_startedHoldingToCloseTime = NULL;
+	}
 }
