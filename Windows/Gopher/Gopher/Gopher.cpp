@@ -35,6 +35,8 @@ void mouseEvent(WORD dwFlags, DWORD mouseData = 0)
 Gopher::Gopher(CXBOXController * controller)
 	: _controller(controller)
 {
+	HINSTANCE hXInputDLL = LoadLibraryA("XInput1_3.dll");
+	_powerOffCallback = (XInputPowerOffController)GetProcAddress(hXInputDLL, (LPCSTR)103);
 }
 
 void Gopher::loop() {
@@ -45,6 +47,11 @@ void Gopher::loop() {
 	handleDisableButton();
 
 	if (_disabled)
+	{
+		return;
+	}
+
+	if (handlePowerOff())
 	{
 		return;
 	}
@@ -263,4 +270,17 @@ void Gopher::mapMouseClick(DWORD STATE, DWORD keyDown, DWORD keyUp)
 	{
 		mouseEvent(keyUp);
 	}
+}
+
+bool Gopher::handlePowerOff()
+{
+	bool poweredOff = false;
+
+	if (_currentState.Gamepad.bLeftTrigger == 0xFF && _currentState.Gamepad.bRightTrigger == 0xFF)
+	{
+		_powerOffCallback(0);
+		poweredOff = true;
+	}
+
+	return poweredOff;
 }

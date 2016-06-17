@@ -10,6 +10,8 @@
 
 #include "CXBOXController.h"
 
+typedef DWORD(WINAPI* XInputPowerOffController)(DWORD i);
+
 #pragma once
 class Gopher
 {
@@ -18,7 +20,7 @@ private:
 	const int SCROLL_DEAD_ZONE = 7000; // Right thumbstick should be less sensitive.
 	const int SCROLL_SPEED = 20; // Speed at which you scroll page.
 	const int FPS = 150;
-	const int SLEEP_AMOUNT = 1000/FPS; // number of milliseconds to sleep per iteration
+	const int SLEEP_AMOUNT = 1000 / FPS; // number of milliseconds to sleep per iteration
 
 	XINPUT_STATE _currentState;
 
@@ -39,6 +41,7 @@ private:
 	std::map<DWORD, bool> _xboxClickIsUp;
 
 	CXBOXController* _controller;
+	XInputPowerOffController _powerOffCallback;
 public:
 
 	Gopher(CXBOXController* controller);
@@ -62,4 +65,6 @@ public:
 	void mapMouseClick(DWORD STATE, DWORD keyDown, DWORD keyUp);
 
 	void setXboxClickState(DWORD state);
+
+	bool handlePowerOff();
 };
