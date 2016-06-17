@@ -1,5 +1,4 @@
 #include "Gopher.h"
-#include "PolicyConfig.h"
 
 void inputKeyboard(WORD cmd, DWORD flag)
 {
@@ -45,6 +44,11 @@ Gopher::~Gopher()
 	if (SUCCEEDED(_hXInputDll))
 	{
 		FreeLibrary(_hXInputDll);
+	}
+
+	if (SUCCEEDED(_pPolicyConfig))
+	{
+		_pPolicyConfig->Release();
 	}
 }
 
@@ -97,19 +101,11 @@ void Gopher::handleDisableButton()
 		_disabled = !_disabled;
 
 		if (_disabled) {
-			Beep(1800, 200);
-			Beep(1600, 200);
-			Beep(1400, 200);
-			Beep(1200, 200);
-			Beep(1000, 200);
+			Beep(1000, 300);
 		}
 		else
 		{
-			Beep(1000, 200);
-			Beep(1200, 200);
-			Beep(1400, 200);
-			Beep(1600, 200);
-			Beep(1800, 200);
+			Beep(1800, 300);
 		}
 	}
 }
@@ -302,60 +298,65 @@ void Gopher::setupAudioDeviceIds()
 	HRESULT hr = CoInitialize(NULL);
 	if (SUCCEEDED(hr))
 	{
-		IMMDeviceEnumerator *pEnum = NULL;
-		// Create a multimedia device enumerator.
-		hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL,
-			CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&pEnum);
+		hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient),
+			NULL, CLSCTX_ALL, __uuidof(IPolicyConfigVista), (LPVOID *)&_pPolicyConfig);
 		if (SUCCEEDED(hr))
 		{
-			IMMDeviceCollection *pDevices;
-			// Enumerate the output devices.
-			hr = pEnum->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &pDevices);
+			IMMDeviceEnumerator *pEnum = NULL;
+			// Create a multimedia device enumerator.
+			hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL,
+				CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&pEnum);
 			if (SUCCEEDED(hr))
 			{
-				UINT count;
-				pDevices->GetCount(&count);
+				IMMDeviceCollection *pDevices;
+				// Enumerate the output devices.
+				hr = pEnum->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &pDevices);
 				if (SUCCEEDED(hr))
 				{
-					for (int i = 0; i < count; i++)
+					UINT count;
+					pDevices->GetCount(&count);
+					if (SUCCEEDED(hr))
 					{
-						IMMDevice *pDevice;
-						hr = pDevices->Item(i, &pDevice);
-						if (SUCCEEDED(hr))
+						for (int i = 0; i < count; i++)
 						{
-							LPWSTR wstrID = NULL;
-							hr = pDevice->GetId(&wstrID);
+							IMMDevice *pDevice;
+							hr = pDevices->Item(i, &pDevice);
 							if (SUCCEEDED(hr))
 							{
-								_audioDeviceIds.push_back(wstrID);
+								LPWSTR wstrID = NULL;
+								hr = pDevice->GetId(&wstrID);
+								if (SUCCEEDED(hr))
+								{
+									_audioDeviceIds.push_back(wstrID);
+								}
+								pDevice->Release();
 							}
-							pDevice->Release();
 						}
 					}
+					pDevices->Release();
 				}
-				pDevices->Release();
-			}
 
-			// set current default audio device
-			_currentAudioDeviceIndex = 0;
-			IMMDevice *pDefaultDevice = NULL;
-			hr = pEnum->GetDefaultAudioEndpoint(eRender, eConsole, &pDefaultDevice);
-			if (SUCCEEDED(hr))
-			{
-				LPWSTR defaultDeviceID;
-				hr = pDefaultDevice->GetId(&defaultDeviceID);
+				// set current default audio device
+				_currentAudioDeviceIndex = 0;
+				IMMDevice *pDefaultDevice = NULL;
+				hr = pEnum->GetDefaultAudioEndpoint(eRender, eConsole, &pDefaultDevice);
 				if (SUCCEEDED(hr))
 				{
-					for (int i = 0; i < _audioDeviceIds.size(); i++)
+					LPWSTR defaultDeviceID;
+					hr = pDefaultDevice->GetId(&defaultDeviceID);
+					if (SUCCEEDED(hr))
 					{
-						if (wcscmp(_audioDeviceIds[i], defaultDeviceID) == 0)
+						for (int i = 0; i < _audioDeviceIds.size(); i++)
 						{
-							_currentAudioDeviceIndex = i;
-							break;
+							if (wcscmp(_audioDeviceIds[i], defaultDeviceID) == 0)
+							{
+								_currentAudioDeviceIndex = i;
+								break;
+							}
 						}
 					}
+					pDefaultDevice->Release();
 				}
-				pDefaultDevice->Release();
 			}
 		}
 	}
@@ -363,22 +364,12 @@ void Gopher::setupAudioDeviceIds()
 
 HRESULT Gopher::changeToNextAudioDevice()
 {
-	if (_audioDeviceIds.size() == 0)
-	{
-		return NULL;
-	}
+	HRESULT hr = NULL;
 
-	IPolicyConfigVista *pPolicyConfig;
-	ERole reserved = eConsole;
-
-	HRESULT hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient),
-		NULL, CLSCTX_ALL, __uuidof(IPolicyConfigVista), (LPVOID *)&pPolicyConfig);
-
-	if (SUCCEEDED(hr))
+	if (_audioDeviceIds.size() > 0 && SUCCEEDED(_pPolicyConfig))
 	{
 		_currentAudioDeviceIndex = (_currentAudioDeviceIndex + 1 >= _audioDeviceIds.size()) ? 0 : (_currentAudioDeviceIndex + 1);
-		hr = pPolicyConfig->SetDefaultEndpoint(_audioDeviceIds[_currentAudioDeviceIndex], reserved);
-		pPolicyConfig->Release();
+		hr = _pPolicyConfig->SetDefaultEndpoint(_audioDeviceIds[_currentAudioDeviceIndex], eConsole);
 	}
 
 	return hr;

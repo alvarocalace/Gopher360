@@ -7,7 +7,9 @@
 #include <endpointvolume.h> //vol
 #include <map>
 #include <vector>
+
 #include "CXBOXController.h"
+#include "PolicyConfig.h"
 
 #pragma once
 class Gopher
@@ -46,6 +48,8 @@ private:
 
 	std::vector<LPWSTR> _audioDeviceIds;
 	int _currentAudioDeviceIndex;
+	IPolicyConfigVista *_pPolicyConfig;
+
 public:
 
 	Gopher(CXBOXController* controller);
