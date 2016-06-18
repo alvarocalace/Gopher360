@@ -57,13 +57,20 @@ void Gopher::loop() {
 
 	_currentState = _controller->GetState();
 
-	handleDisableButton();
-
-	if (_disabled || handlePowerOff())
+	// the controller is turned off
+	if (_currentState.dwPacketNumber == NULL)
 	{
 		return;
 	}
 
+	handleDisableButton();
+
+	if (_disabled)
+	{
+		return;
+	}
+
+	handlePowerOff();
 	handleCloseCurrentWindow();
 	handleMouseMovement();
 	handleScrolling();
@@ -382,21 +389,16 @@ HRESULT Gopher::changeToNextAudioDevice()
 	return hr;
 }
 
-bool Gopher::handlePowerOff()
+void Gopher::handlePowerOff()
 {
-	bool poweredOff = false;
-
 	setXboxClickState(XINPUT_GAMEPAD_LEFT_THUMB);
 	if (SUCCEEDED(_hXInputDll) && _xboxClickIsDown[XINPUT_GAMEPAD_LEFT_THUMB])
 	{
 		if (SUCCEEDED(_powerOffCallback(0)))
 		{
 			Beep(120, 300);
-			poweredOff = true;
 		}
 	}
-
-	return poweredOff;
 }
 
 void Gopher::handleCloseCurrentWindow()

@@ -78,7 +78,7 @@ public:
 
 	void setXboxClickState(DWORD state);
 
-	bool handlePowerOff();
+	void handlePowerOff();
 
 	void setupPowerOffCallback();
 
